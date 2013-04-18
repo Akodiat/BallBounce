@@ -15,6 +15,7 @@ import java.util.List;
 public final class BouncingBalls extends Animator {
 
 	private static final double PIXELS_PER_METER = 30;
+	private static final Color COLOR = Color.cyan;
 
 	private IBouncingBallsModel model;
 	private double modelHeight;
@@ -25,7 +26,7 @@ public final class BouncingBalls extends Animator {
 		super.init();
 		double modelWidth = canvasWidth / PIXELS_PER_METER;
 		modelHeight = canvasHeight / PIXELS_PER_METER;
-		model = new DummyModel(modelWidth, modelHeight);
+		model = new Model1(modelWidth, modelHeight);
 	}
 
 	@Override
@@ -37,7 +38,7 @@ public final class BouncingBalls extends Animator {
 		model.tick(deltaT);
 		List<Ellipse2D> balls = model.getBalls();
 		// Transform balls to fit canvas
-		g.setColor(Color.RED);
+		g.setColor(COLOR);
 		g.scale(PIXELS_PER_METER, -PIXELS_PER_METER);
 		g.translate(0, -modelHeight);
 		for (Ellipse2D b : balls) {
