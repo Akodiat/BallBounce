@@ -2,6 +2,8 @@ import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 public class Model3 implements IBouncingBallsModel {
 
 	private final double areaWidth;
@@ -14,6 +16,8 @@ public class Model3 implements IBouncingBallsModel {
 		this.areaHeight = height;
 		myBalls = new ArrayList<Ball>();
 
+		PolCord p = new PolCord(5,3);
+		JOptionPane.showInputDialog("x=5, y=3 -->\nangle="+p.angle+" \nlenght="+p.length+" --> \nx="+p.getX()+" y="+p.getY());
 		myBalls.add(new Ball(1,4,2.3,1,1,1));
 		myBalls.add(new Ball(3,3,2.3,1,1,1));
 	}
@@ -101,16 +105,16 @@ public class Model3 implements IBouncingBallsModel {
 		private double length, angle;
 		private PolCord(double x, double y){
 			this.length = Math.sqrt(Math.pow(x, 2)+Math.pow(y, 2));
-			this.angle = Math.tan(y/x);
+			this.angle = Math.atan(y/x);
 		}
-		private PolCord(){
-			this.length = this.angle = 0;
-		}
+//		private PolCord(){
+//			this.length = this.angle = 0;
+//		}
 		private double getX(){
-			return Math.acos(angle)*length;
+			return (Math.cos(angle))*length;
 		}
 		private double getY(){
-			return Math.asin(angle)*length;
+			return (Math.sin(angle))*length;
 		}
 	}
 }
