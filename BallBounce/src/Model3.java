@@ -1,5 +1,4 @@
 import java.awt.geom.Ellipse2D;
-import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +14,8 @@ public class Model3 implements IBouncingBallsModel {
 		this.areaHeight = height;
 		myBalls = new ArrayList<Ball>();
 
-		myBalls.add(new Ball(1,4,2.3,1,1));
-		myBalls.add(new Ball(3,3,2.3,1,1));
+		myBalls.add(new Ball(1,4,2.3,1,1,1));
+		myBalls.add(new Ball(3,3,2.3,1,1,1));
 	}
 
 	@Override
@@ -31,15 +30,36 @@ public class Model3 implements IBouncingBallsModel {
 			b.x += b.vx * deltaT;
 			b.y += b.vy * deltaT;
 			b.vy += -9.82*deltaT;
-			
-			for(int j=i; j<this.myBalls.size(); j++){ //Only checks with subsequent balls (eliminates redundant checks)
+
+			for(int j=i+1; j<this.myBalls.size(); j++){ //Only checks with subsequent balls (eliminates redundant checks)
 				Ball b2 = this.myBalls.get(j);
 				if(b.collidesWith(b2)){
-					b.vx *= -1;
-					b2.vx *= -1;
+					handleCollision(b,b2);
 				}
 			}
 		}
+	}
+
+	private void handleCollision(Ball b1, Ball b2) {
+		//Translate velocity from rect to polar
+		PolCord c1 = new PolCord(b1.vx, b1.vy);
+		PolCord c2 = new PolCord(b2.vx, b2.vy);
+
+		double v1prev = c1.length;
+		double v2prev = c2.length;
+
+		double I = (b1.m * v1prev + b2.m * v2prev);
+		double R = -(v2prev-v1prev);
+
+		c1.length = ( ((I/b2.m)-R) / (1+(b1.m/b2.m)) );
+		c2.length = ( (I-b1.m*c1.length) / b2.m );
+
+		//Translate velocity back from polar to rect
+		b1.vx = c1.getX();
+		b1.vy = c1.getY();
+		b2.vx = c2.getX();
+		b2.vy = c2.getY();
+
 	}
 
 	@Override
@@ -51,13 +71,23 @@ public class Model3 implements IBouncingBallsModel {
 	}
 
 	private class Ball{
-		private double x, y, vx, vy, r;
-		private Ball(double x, double y, double vx, double vy, double r){
+		private double x, y, vx, vy, r, m;
+		/**
+		 * 
+		 * @param x x-coord
+		 * @param y y-coord
+		 * @param vx x-velocity
+		 * @param vy y-velocity
+		 * @param r radius
+		 * @param m mass
+		 */
+		private Ball(double x, double y, double vx, double vy, double r, double m){
 			this.x = x;
 			this.y = y;
 			this.vx = vx;
 			this.vy = vy;
 			this.r = r;
+			this.m = m;
 		}
 		private Ellipse2D getShape(){
 			return new Ellipse2D.Double(this.x - this.r, this.y - this.r, 2 * this.r, 2 * this.r);
@@ -65,6 +95,22 @@ public class Model3 implements IBouncingBallsModel {
 		private boolean collidesWith(Ball other){
 			double distance = Math.sqrt((Math.pow(this.x-other.x, 2) + Math.pow(this.y-other.y, 2)));
 			return distance < (this.r + other.r);
+		}
+	}
+	private class PolCord{
+		private double length, angle;
+		private PolCord(double x, double y){
+			this.length = Math.sqrt(Math.pow(x, 2)+Math.pow(y, 2));
+			this.angle = Math.tan(y/x);
+		}
+		private PolCord(){
+			this.length = this.angle = 0;
+		}
+		private double getX(){
+			return Math.acos(angle)*length;
+		}
+		private double getY(){
+			return Math.asin(angle)*length;
 		}
 	}
 }
