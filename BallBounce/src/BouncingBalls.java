@@ -42,6 +42,7 @@ public final class BouncingBalls extends Animator {
 		g.scale(PIXELS_PER_METER, -PIXELS_PER_METER);
 		g.translate(0, -modelHeight);
 		for (Ellipse2D b : balls) {
+			//g.setColor(Color.getHSBColor((float)Math.random(), (float)Math.random(), (float)Math.random()));
 			g.fill(b);
 		}
 	}

@@ -15,6 +15,7 @@ public class Model2 implements IBouncingBallsModel {
 		myBalls = new LinkedList<Ball>();
 
 		myBalls.add(new Ball(1,4,2.3,1,1));
+		myBalls.add(new Ball(3,3,2.3,1,1));
 	}
 
 	@Override
