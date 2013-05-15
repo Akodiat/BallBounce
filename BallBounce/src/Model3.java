@@ -16,31 +16,31 @@ public class Model3 implements IBouncingBallsModel {
 		this.areaHeight = height;
 		myBalls = new ArrayList<Ball>();
 
-		PolCord p = new PolCord(5,3);
-		//JOptionPane.showInputDialog("x=5, y=3 -->\nangle="+p.angle+" \nlenght="+p.length+" --> \nx="+p.getX()+" y="+p.getY());
-		myBalls.add(new Ball(2,3,2.3,1,1,1));
-		myBalls.add(new Ball(2,5,2,2,1,1));
+		myBalls.add(new Ball(6,3,2.3,5,2,1));
+		myBalls.add(new Ball(2,7,2,2,2,2));
 		myBalls.add(new Ball(3,2,-1,2,0.5,0.5));
 	}
 
 	@Override
-	public void tick(double deltaT) { //y' = vy; vy' = -g GRAVITATION (tillståndet i y-led, (y, vy))
+	public void tick(double deltaT) {
 
 		for (int i=0; i<this.myBalls.size(); i++) {
 			Ball b = this.myBalls.get(i);
+
+
+
+			for(int j=i+1; j<this.myBalls.size(); j++){ //Only checks with subsequent balls (eliminates redundant checks)
+				Ball b2 = this.myBalls.get(j);
+				if(b.collidesWith(b2)){
+					handleCollision(b,b2);
+					continue;
+				}
+			}
+
 			if (b.x < b.r || b.x > areaWidth - b.r)
 				b.vx *= -1;
-			else if (b.y < b.r || b.y > areaHeight - b.r)
+			if (b.y < b.r || b.y > areaHeight - b.r)
 				b.vy *= -1;
-
-			else
-				for(int j=i+1; j<this.myBalls.size(); j++){ //Only checks with subsequent balls (eliminates redundant checks)
-					Ball b2 = this.myBalls.get(j);
-					if(b.collidesWith(b2)){
-						handleCollision(b,b2);
-					}
-				}
-
 			b.x += b.vx * deltaT;
 			b.y += b.vy * deltaT;
 			b.vy += -9.82*deltaT;
@@ -48,26 +48,40 @@ public class Model3 implements IBouncingBallsModel {
 	}
 
 	private void handleCollision(Ball b1, Ball b2) {
+		//Find angle between original and collision coordinate system
+		double distance = Math.sqrt((Math.pow(b1.x-b2.x, 2) + Math.pow(b1.y-b2.y, 2)));
+		double angle = Math.asin(Math.abs(b1.y-b2.y)/distance); 
+
 		//Translate velocity from rect to polar
-		PolCord c1 = new PolCord(b1.vx, b1.vy);
-		PolCord c2 = new PolCord(b2.vx, b2.vy);
+		PolCord v1 = new PolCord(b1.vx, b1.vy);
+		PolCord v2 = new PolCord(b2.vx, b2.vy);
 
-		double I = (b1.m * c1.length + b2.m * c2.length);
-		double R = -(c2.length-c1.length);
+		//The polar coordinate angle in a rotated coordinate system is the old angle minus the rotation angle
+		v1.angle -= angle;
+		v2.angle -= angle;
 
-		c1.length = ((-I+b2.m*R)/(b1.m+b2.m));
-		c2.length = ( ( I/(b1.m+b2.m) ) + R-( (b1.m*R)/(b1.m+b2.m) ) );
+		//The y-component of the force should be conserved, so we save it away
+		//("As with collision with a wall the velocity tangential to the surface of the ball is not affected")
+		double v1y = v1.getY();
+		double v2y = v2.getY();
 
-		//c1.angle += Math.PI;
-		//c2.angle += Math.PI;
+		//Calculate the collision (the x-component is what changes)
+		double I = (b1.m * v1.getX() + b2.m * v2.getX());
+		double R = -(v2.getX()-v1.getX());
+		v1 = new PolCord(((-I+b2.m*R)/(b1.m+b2.m)), v1.getY());
+		v2 = new PolCord(( ( I/(b1.m+b2.m) ) + R-( (b1.m*R)/(b1.m+b2.m) ) ), v2.getY());
+
+
+		//Rotate the coordinate system back to the original one
+		v1.angle += angle;
+		v2.angle += angle;
+
 
 		//Translate velocity back from polar to rect
-		b1.vx = c1.getX();
-		b1.vy = c1.getY();
-		b2.vx = c2.getX();
-		b2.vy = c2.getY();
-
-
+		b1.vx = v1.getX();
+		b1.vy = v1.getY();
+		b2.vx = v2.getX();
+		b2.vy = v2.getY();
 	}
 
 	@Override
@@ -105,14 +119,6 @@ public class Model3 implements IBouncingBallsModel {
 		private boolean collidesWith(Ball other){
 			double distance = Math.sqrt((Math.pow(this.x-other.x, 2) + Math.pow(this.y-other.y, 2)));
 			return distance <= (this.r + other.r);
-			/*	if (distance <= (this.r + other.r) && !this.collidingWith.contains(other)){
-				this.collidingWith.add(other);
-				return true;
-			}
-			if (distance > (this.r + other.r) && this.collidingWith.contains(other))
-				this.collidingWith.remove(other);
-			return false;
-			 */
 		}
 	}
 	private class PolCord{
@@ -121,9 +127,6 @@ public class Model3 implements IBouncingBallsModel {
 			this.length = Math.sqrt(Math.pow(x, 2)+Math.pow(y, 2));
 			this.angle = Math.atan(y/x);
 		}
-		//		private PolCord(){
-		//			this.length = this.angle = 0;
-		//		}
 		private double getX(){
 			return (Math.cos(angle))*length;
 		}
