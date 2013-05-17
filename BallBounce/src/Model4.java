@@ -3,55 +3,82 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class Model3 implements IBouncingBallsModel {
+public class Model4 implements IBouncingBallsModel {
 
 	private final double areaWidth;
 	private final double areaHeight;
-	private ArrayList<Ball> myBalls;
+	private Ball a, b;
 
-
-	public Model3(double width, double height) {
+	public Model4(double width, double height) {
 		this.areaWidth = width;
 		this.areaHeight = height;
-		myBalls = new ArrayList<Ball>();
 
-		//myBalls.add(new Ball(6,3,2.3,5,1,1));
-		myBalls.add(new Ball(4,3,2.3,5,1,1));
-		myBalls.add(new Ball(2,7,2,2,2,2));
-		//myBalls.add(new Ball(3,2,-1,2,0.5,0.5));
+		a = new Ball(7,3,2,1.1,1,1);
+		b = new Ball(3,7,2,2,2,2);
 	}
 
 	@Override
 	public void tick(double deltaT) {
+		a.vy += -9.82*deltaT/2;
+		b.vy += -9.82*deltaT/2;
 
-		for (int i=0; i<this.myBalls.size(); i++) {
-			Ball b = this.myBalls.get(i);
-			
-			if (b.x < b.r || b.x > areaWidth - b.r)
-				b.vx *= -1;
-			if (b.y < b.r || b.y > areaHeight - b.r)
-				b.vy *= -1;
-			
-			for(int j=i+1; j<this.myBalls.size(); j++){ //Only checks with subsequent balls (eliminates redundant checks)
-				Ball b2 = this.myBalls.get(j);
-				if(b.collidesWith(b2)){
-					handleCollision(b,b2);
-				}
-			}		
-		}
-		for (int i=0; i<this.myBalls.size(); i++) {
-			Ball b = this.myBalls.get(i);
+		if(a.collidesWith(b)){
+			handleCollision(a,b);
 
-			b.x += b.vx * deltaT;
-			b.y += b.vy * deltaT;
-			b.vy += -9.82*deltaT;
 		}
+
+		//Ball B
+
+		if ((b.x < b.r || b.x > areaWidth - b.r) && !b.inWallX){
+			b.inWallX = true;
+			b.vx *= -1;
+		}
+		else
+			b.inWallX = false;
+
+
+		if ((b.y < b.r || b.y > areaHeight - b.r) && !b.inWallY){
+			b.inWallY = true;
+			b.vy *= -1;
+		}
+		else
+			b.inWallY = false;
+
+
+		//Ball A
+		if ((a.x < a.r || a.x > areaWidth - a.r) && !a.inWallX){
+			a.inWallX = true;
+			a.vx *= -1;
+		}
+		else
+			a.inWallX = false;
+
+
+		if ((a.y < a.r || a.y > areaHeight - a.r) && !a.inWallY){
+			a.inWallY = true;
+			a.vy *= -1;
+		}
+		else
+			a.inWallY = false;
+
+
+
+	
+
+		a.x += a.vx * deltaT;
+		a.y += a.vy * deltaT;
+		b.x += b.vx * deltaT;
+		b.y += b.vy * deltaT;
+		
+		a.vy += -9.82*deltaT/2;
+		b.vy += -9.82*deltaT/2;
+
 	}
 
 	private void handleCollision(Ball b1, Ball b2) {
 		//Find angle between original and collision coordinate system
-		double distance = Math.sqrt((Math.pow(b1.x-b2.x, 2) + Math.pow(b1.y-b2.y, 2)));
-		double angle = Math.asin((b1.y-b2.y)/distance); 
+		//double distance = Math.sqrt((Math.pow(b1.x-b2.x, 2) + Math.pow(b1.y-b2.y, 2)));
+		double angle = Math.atan((b2.y-b1.y)/(b2.x-b1.x));	//Math.asin((b1.y-b2.y)/distance); 
 
 		//Translate velocity from rect to polar
 		PolCord v1 = new PolCord(b1.vx, b1.vy);
@@ -83,13 +110,15 @@ public class Model3 implements IBouncingBallsModel {
 	@Override
 	public List<Ellipse2D> getBalls() {
 		List<Ellipse2D> ballShapes = new ArrayList<Ellipse2D>();
-		for (Ball b : this.myBalls)
-			ballShapes.add(b.getShape());
+		ballShapes.add(a.getShape());
+		ballShapes.add(b.getShape());
+
 		return ballShapes;
 	}
 
 	private class Ball{
 		private double x, y, vx, vy, r, m;
+		private boolean inWallX, inWallY;
 		/**
 		 * 
 		 * @param x x-coord
@@ -106,6 +135,8 @@ public class Model3 implements IBouncingBallsModel {
 			this.vy = vy;
 			this.r = r;
 			this.m = m;
+			this.inWallX = false;
+			this.inWallY = false;
 		}
 		private Ellipse2D getShape(){
 			return new Ellipse2D.Double(this.x - this.r, this.y - this.r, 2 * this.r, 2 * this.r);
@@ -120,6 +151,8 @@ public class Model3 implements IBouncingBallsModel {
 		private PolCord(double x, double y){
 			this.length = Math.sqrt(Math.pow(x, 2)+Math.pow(y, 2));
 			this.angle = Math.atan(y/x);
+			if(x<0)
+				this.angle += Math.PI;
 		}
 		private double getX(){
 			return (Math.cos(angle))*length;

@@ -26,7 +26,7 @@ public final class BouncingBalls extends Animator {
 		super.init();
 		double modelWidth = canvasWidth / PIXELS_PER_METER;
 		modelHeight = canvasHeight / PIXELS_PER_METER;
-		model = new Model3(modelWidth, modelHeight);
+		model = new Model4(modelWidth, modelHeight);
 	}
 
 	@Override
@@ -44,6 +44,9 @@ public final class BouncingBalls extends Animator {
 		for (Ellipse2D b : balls) {
 			//g.setColor(Color.getHSBColor((float)Math.random(), (float)Math.random(), (float)Math.random()));
 			g.fill(b);
+			//g.setColor(Color.DARK_GRAY);
+			//g.draw(b);
+			//g.setColor(COLOR);
 		}
 	}
 
